@@ -114,7 +114,9 @@ class ModelConfig:
     # True if this model does not allow '.' in function names
     underscore_to_dot: bool = False
 
-
+    top_k: Optional[int] = None
+    top_p: Optional[float] = 1.0
+    
 # Inference through API calls
 api_inference_model_map = {
     "gorilla-openfunctions-v2": ModelConfig(

@@ -75,19 +75,33 @@ def get_args():
         default=None,
         help="Specify the maximum LoRA rank for vLLM backend.",
     )
+    parser.add_argument(
+        "--top-k",
+        type=int,
+        default=None,
+        help="Specify the top-k for the model.",
+    )
+    parser.add_argument(
+        "--top-p",
+        type=float,
+        default=1.0,
+        help="Specify the top-p for the model.",
+    )
     args = parser.parse_args()
     print(f"Parsed arguments: {args}")
 
     return args
 
 
-def build_handler(model_name, temperature):
+def build_handler(model_name, temperature, top_k=None, top_p=1.0):
     config = MODEL_CONFIG_MAPPING[model_name]
     handler = config.model_handler(
         model_name=config.model_name,
         temperature=temperature,
         registry_name=model_name,
         is_fc_model=config.is_fc_model,
+        top_k=top_k,
+        top_p=top_p,
     )
     return handler
 
@@ -221,7 +235,7 @@ def multi_threaded_inference(handler, test_case, include_input_log, exclude_stat
 
 
 def generate_results(args, model_name, test_cases_total):
-    handler = build_handler(model_name, args.temperature)
+    handler = build_handler(model_name, args.temperature, args.top_k, args.top_p)
 
     if isinstance(handler, OSSHandler):
         handler: OSSHandler
