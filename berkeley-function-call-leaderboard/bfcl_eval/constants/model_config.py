@@ -67,6 +67,7 @@ from bfcl_eval.model_handler.local_inference.salesforce_qwen import (
     SalesforceQwenHandler,
 )
 from bfcl_eval.model_handler.local_inference.think_agent import ThinkAgentHandler
+from bfcl_eval.model_handler.local_inference.base_oss_handler import OSSHandler
 
 # -----------------------------------------------------------------------------
 # A mapping of model identifiers to their respective model configurations.
@@ -2166,6 +2167,18 @@ third_party_inference_model_map = {
         is_fc_model=True,
         underscore_to_dot=True,
     ),
+    "smoe": ModelConfig(
+        model_name="smoe",
+        display_name="smoe",
+        url="https://huggingface.co/smoe",
+        org="Zyphra",
+        license="apache-2.0",
+        model_handler=OSSHandler,
+        input_price=None,
+        output_price=None,
+        is_fc_model=True,
+        underscore_to_dot=True,
+    ),    
 }
 
 

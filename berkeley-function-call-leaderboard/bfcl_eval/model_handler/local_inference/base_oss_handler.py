@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import threading
@@ -45,7 +46,7 @@ class OSSHandler(BaseHandler, EnforceOverrides):
         # Support custom base_url and api_key for remote/local OpenAI-compatible deployments (e.g., vLLM)
         # Use REMOTE_OPENAI_* variables to avoid conflicts with main OPENAI_* variables
         self.base_url = os.getenv("REMOTE_OPENAI_BASE_URL", f"http://{self.local_server_endpoint}:{self.local_server_port}/v1")
-        self.api_key = os.getenv("REMOTE_OPENAI_API_KEY", "EMPTY")
+        self.api_key = os.getenv("REMOTE_OPENAI_API_KEY", "asdf1324")
         self.client = OpenAI(base_url=self.base_url, api_key=self.api_key)
 
     @override
@@ -309,9 +310,90 @@ class OSSHandler(BaseHandler, EnforceOverrides):
         Manually apply the chat template to construct the formatted prompt.
         This way, we can have full control over the final formatted prompt and is generally recommended for advanced use cases.
         """
-        raise NotImplementedError(
-            "OSS Models should implement their own prompt formatting."
+        tokenizer = self.tokenizer
+        formatted_prompt = tokenizer.apply_chat_template(
+            messages,
+            tools=function,
+            tokenize=False,
+            add_generation_prompt=True
         )
+        if not os.path.exists("formatted_prompt.txt"):
+            with open("formatted_prompt.txt", "w") as f:
+                f.write(formatted_prompt)
+            print(f"Saved formatted prompt to formatted_prompt.txt")
+        if not os.path.exists("messages.txt"):
+            with open("messages.txt", "w") as f:
+                f.write(str(messages))
+            print(f"Saved messages to messages.txt")
+
+        return formatted_prompt        
+        # formatted_prompt = ""
+
+        # if messages[0]["role"] == "system":
+        #     formatted_prompt += f"<|im_start|>system\n{messages[0]['content']}<|im_end|>\n"
+
+        # last_query_index = len(messages) - 1
+        # for offset, message in enumerate(reversed(messages)):
+        #     idx = len(messages) - 1 - offset
+        #     if (
+        #         message["role"] == "user"
+        #         and type(message["content"]) == str
+        #         and not (
+        #             message["content"].startswith("<zyphra_tool_response>")
+        #             and message["content"].endswith("</zyphra_tool_response>")
+        #         )
+        #     ):
+        #         last_query_index = idx
+        #         break
+
+        # for idx, message in enumerate(messages):
+        #     role = message["role"]
+        #     content = message["content"]
+
+        #     if role == "user" or (role == "system" and idx != 0):
+        #         formatted_prompt += f"<|im_start|>{role}\n{content}<|im_end|>\n"
+
+        #     elif role == "assistant":
+        #         reasoning_content = ""
+        #         if "reasoning_content" in message and message["reasoning_content"]:
+        #             reasoning_content = message["reasoning_content"]
+
+        #         elif "</think>" in content:
+        #             parts = content.split("</think>")
+        #             reasoning_content = (
+        #                 parts[0].rstrip("\n").split("<think>")[-1].lstrip("\n")
+        #             )
+        #             content = parts[-1].lstrip("\n")
+
+        #         if idx > last_query_index:
+        #             if idx == len(messages) - 1 or reasoning_content:
+        #                 formatted_prompt += (
+        #                     f"<|im_start|>{role}\n<think>\n"
+        #                     + reasoning_content.strip("\n")
+        #                     + f"\n</think>\n\n"
+        #                     + content.lstrip("\n")
+        #                 )
+        #             else:
+        #                 formatted_prompt += f"<|im_start|>{role}\n{content}"
+        #         else:
+        #             formatted_prompt += f"<|im_start|>{role}\n{content}"
+
+        #         formatted_prompt += "<|im_end|>\n"
+
+        #     elif role == "tool":
+        #         prev_role = messages[idx - 1]["role"] if idx > 0 else None
+        #         next_role = messages[idx + 1]["role"] if idx < len(messages) - 1 else None
+
+        #         if idx == 0 or prev_role != "tool":
+        #             formatted_prompt += "<|im_start|>user"
+
+        #         formatted_prompt += f"\n<zyphra_tool_response>\n{content}\n</zyphra_tool_response>"
+
+        #         if idx == len(messages) - 1 or next_role != "tool":
+        #             formatted_prompt += "<|im_end|>\n"
+
+        # formatted_prompt += "<|im_start|>assistant\n"
+        # return formatted_prompt
 
     @override
     def _query_prompting(self, inference_data: dict):
