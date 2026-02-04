@@ -2181,6 +2181,18 @@ third_party_inference_model_map = {
         is_fc_model=True,
         underscore_to_dot=True,
     ),    
+    "qwen3-4b-instruct": ModelConfig(
+        model_name="qwen3-4b-instruct",
+        display_name="Qwen3-4B-Instruct",
+        url="https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507",
+        org="Qwen",
+        license="apache-2.0",
+        model_handler=SMOEHandler,
+        input_price=None,
+        output_price=None,
+        is_fc_model=True,
+        underscore_to_dot=True,
+    ),
 }
 
 

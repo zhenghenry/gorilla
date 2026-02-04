@@ -635,6 +635,7 @@ def ast_file_runner(
 
     result = []
     correct_count = 0
+    payloads = []
     for i in range(len(model_result)):
         index = model_result[i]["id"]
         model_result_item = model_result[i]["result"]
@@ -658,6 +659,33 @@ def ast_file_runner(
             correct_count += 1
         else:
             result.append(entry_result)
+
+        if "error" in entry_result:
+            error = entry_result["error"]
+        else:
+            error = None
+        payloads.append({
+            "model_result": model_result_item,
+            "possible_answer": possible_answer_item,
+            "is_correct": entry_result["valid"],
+            "error": error,
+        })
+    print(f"🔍 Saving eval to ./score/{model_name}/eval_res.json")
+    if not os.path.exists(f"./score/{model_name}"):
+        os.makedirs(f"./score/{model_name}")
+    with open(f"./score/{model_name}/eval_res.json", "w") as f:
+        json.dump(payloads, f, indent=4)
+
+    all_errors = [payload["error"] for payload in payloads if payload["error"] is not None]
+    unique_errors = []
+    for error in all_errors:
+        if error not in unique_errors:
+            unique_errors.append(error)
+
+    for error in unique_errors:
+        print(f"🔍 Error: {error}")
+        print(f"🔍 Number of errors: {all_errors.count(error)} out of {len(all_errors)}")
+        print(f"🔍 Percentage of errors: {all_errors.count(error) / len(all_errors) * 100:.2f}%")
 
     return save_eval_results(
         result, correct_count, model_result, test_category, model_name, score_dir
@@ -685,6 +713,7 @@ def evaluate_task(
     )
 
     if is_relevance_or_irrelevance(test_category):
+        print(f"🔍 Running relevance/irrelevance test: {test_category}")
         prompt, _ = _subset_entries_by_model_ids(
             model_result, prompt, None, allow_missing=allow_missing
         )
@@ -694,6 +723,7 @@ def evaluate_task(
         )
 
     else:
+        print(f"🔍 Running non-relevance/relevance test: {test_category}")
         # Find the corresponding possible answer entries
         possible_answer = load_ground_truth_entry(test_category)
         # Sanity: prompt and ground truth should be 1:1
@@ -706,6 +736,7 @@ def evaluate_task(
         )
 
         if is_format_sensitivity(test_category):
+            print(f"🔍 Running format sensitivity test: {test_category}")
             accuracy, total_count = format_sensitivity_runner(
                 handler,
                 model_result,
@@ -717,6 +748,7 @@ def evaluate_task(
             )
 
         elif is_multi_turn(test_category):
+            print(f"🔍 Running multi-turn test: {test_category}")
             accuracy, total_count = multi_turn_runner(
                 handler,
                 model_result,
@@ -728,6 +760,7 @@ def evaluate_task(
             )
 
         elif is_agentic(test_category):
+            print(f"🔍 Running agentic test: {test_category}")
             accuracy, total_count = agentic_runner(
                 handler,
                 model_result,
@@ -739,6 +772,7 @@ def evaluate_task(
             )
         # Single turn test
         else:
+            print(f"🔍 Running AST test: {test_category}")
             accuracy, total_count = ast_file_runner(
                 handler,
                 model_result,

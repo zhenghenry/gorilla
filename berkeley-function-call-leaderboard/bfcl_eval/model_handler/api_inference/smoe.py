@@ -9,7 +9,6 @@ import time
 from bfcl_eval.constants.eval_config import LOCAL_SERVER_PORT
 
 
-
 class SMOEHandler(OpenAICompletionsHandler):
     """
     This is the OpenAI-compatible API handler with streaming enabled.

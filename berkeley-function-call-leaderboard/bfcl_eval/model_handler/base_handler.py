@@ -28,6 +28,9 @@ if TYPE_CHECKING:
     )
 
 
+import os
+import json
+
 class BaseHandler:
     model_name: str
     is_fc_model: bool
@@ -64,6 +67,8 @@ class BaseHandler:
         # Set any additional attributes passed via kwargs
         for _key, _value in kwargs.items():
             setattr(self, _key, _value)
+
+        self.save_count = 0
 
     def inference(
         self,
@@ -696,6 +701,19 @@ class BaseHandler:
 
         # Try parsing the model response
         model_response_data = self._parse_query_response_FC(api_response)
+
+        self.save_count += 1
+        payload = {
+            "api_response": api_response.choices[0].to_dict(),
+            "model_response_data": model_response_data,
+            "inference_data": inference_data,
+        }
+        if self.save_count < 20:
+            print(f"saving to ./result/{self.registry_name}/save_count_{self.save_count}.json")
+            path_to_save = f"./result/{self.registry_name}/save_count_{self.save_count}.json"
+            os.makedirs(os.path.dirname(path_to_save), exist_ok=True)
+            with open(path_to_save, "w") as f:
+                json.dump(payload, f, indent=4)
 
         # Process the metadata
         metadata = {}
